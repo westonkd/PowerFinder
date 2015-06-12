@@ -1,0 +1,191 @@
+/*************************************************************************
+ * Program:
+ *    Vastness -- Exploring the unknown expanse of algorithmic power.
+ *
+ * Author:
+ *    Your name here
+ *
+ * Summary:
+ *    A program to experiment with power of 2 prefixes.
+ *************************************************************************/
+
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <initializer_list>
+using namespace std;
+
+string pb = "\n\n"; // used by the whatIlearned script
+
+int lineLength = 72; // a reasonable default
+
+/****************************************************************
+ * A class for encapsulating words as a vector of strings.
+ *
+ * Shows how to use the slick C++11 initializer_list feature.
+ ****************************************************************/
+class Learned
+{
+private:
+   vector<string> words;
+
+public:
+   Learned(initializer_list<string> il) : words(il)
+   {
+   }
+   
+   void add(string str)
+   {
+      if (str.length() > 0)
+      {
+         words.push_back(str);
+      }
+   }
+
+   void append(initializer_list<string> il)
+   {
+      words.insert(words.end(), il.begin(), il.end());
+   }
+   
+   void clear()
+   {
+      words.clear();
+   }
+
+   vector<string> & getWords()
+   {
+      return words;
+   }
+};
+
+/***********************************************************************
+ * OVERLOADED LEARNED STREAM INSERTION OPERATOR
+ *
+ * Puts the Learned object's vector of words to the given output stream,
+ * breaking lines so as not to exceed lineLength characters.
+ *
+ * The lineLength variable is deliberately global,
+ * thus it can be set from the getArgs function, perhaps.
+ ***********************************************************************/
+ostream& operator<<(ostream& os, Learned& lrnd)
+{
+   vector<string> words = lrnd.getWords();
+
+   int lineTotal = 0;
+
+   for (int i = 0; i < words.size(); i++)
+   {
+      if (words[i] == pb)
+      {
+         os << endl << endl;
+         lineTotal = 0;
+      }
+      else
+      {
+         char token[256];
+         strcpy(token, words[i].c_str());
+
+         char * p = strtok(token, " ");
+         while (p)
+         {
+            int len = strlen(p);
+
+            if (len + lineTotal > lineLength)
+            {
+               os << endl;
+               lineTotal = 0;
+            }
+            os << p << " ";
+
+            lineTotal += len;
+
+            p = strtok(NULL, " ");
+         }
+      }
+   }
+   return os;
+}
+
+/****************************************************************
+ * A singleton Args class for encapsulated global access.
+ ****************************************************************/
+class Args
+{
+public:
+   long double prefix;
+   long double base;
+
+   Args()
+   {
+      prefix = 2;
+      base = 2;
+   }
+} Args;
+
+/****************************************************************
+ * getArgs
+ *
+ *  gets command-line arguments and
+ *  consolidates the information into one string,
+ *  which is returned.
+ ****************************************************************/
+string getArgs(int argc, const char* argv[])
+{
+   long double prefix = 0;
+   long double base = 2;
+   if (argc == 2)
+   {
+      prefix = strtod(argv[1], NULL);
+   }
+   else if (argc == 3)
+   {
+      prefix = strtod(argv[1], NULL);
+      base = strtod(argv[2], NULL);
+   }
+
+   Args.prefix = prefix;
+   Args.base = base;
+
+   return string("useArgs");
+}
+
+/**************************************************************************
+ * run
+ *
+ *  finds the power of two that has a user-supplied prefix
+ *  long double version
+ *************************************************************************/
+void run(string params)
+{
+   if (params != "useArgs")
+   {
+      return; // no other tests have been defined
+   }
+
+   long double n = Args.base;
+   long double p = Args.prefix;
+}
+
+/*************************************************************************
+ * usage
+ *
+ * Tells the user how to use the program.
+ *************************************************************************/
+void usage(const char * programName)
+{
+}
+
+/*************************************************************************
+ * learned
+ *
+ * Tells interested parties what you learned.
+ *************************************************************************/
+void learned()
+{
+   Learned lrnd = {
+#include "whatIlearned.txt"
+   };
+   cout << lrnd;
+}

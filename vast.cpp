@@ -1,0 +1,146 @@
+#include <stdio.h>
+#include <gmp.h>
+#include <mpfr.h>
+#include <iostream>
+#include <stdarg.h>
+#include <math.h>
+#include <sys/time.h>
+#include <stdlib.h>
+
+using namespace std;
+
+/*
+ *
+ */
+class PowerFinder
+{
+public:
+  PowerFinder(int prefix) : prefix(prefix) 
+  {
+    //set the default precision
+    mpfr_set_default_prec(128);
+    
+    //initialize GMP floating point vars
+    mpfr_init(lowerBound);
+    mpfr_init(upperBound);
+    mpfr_init(logTenTwo);
+    
+    //set the correct values
+    mpfr_set_d(logTenTwo, 2.0, MPFR_RNDN);
+    mpfr_log10 (logTenTwo, logTenTwo, MPFR_RNDN);
+    
+    //set the lower limit to log_10 of prefix
+    mpfr_set_d(lowerBound, prefix, MPFR_RNDN);
+    mpfr_log10 (lowerBound, lowerBound, MPFR_RNDN);
+    toFractionalPart(lowerBound);
+    
+    //set the upper bound to log_10 of prefix + 1
+    mpfr_set_d(upperBound, prefix + 1, MPFR_RNDN);
+    mpfr_log10 (upperBound, upperBound, MPFR_RNDN);
+    toFractionalPart(upperBound);
+  };
+  
+  ~PowerFinder()
+  {
+    //clear GMP floating point vars
+    mpfr_clear(lowerBound);
+    mpfr_clear(upperBound);
+    mpfr_clear(logTenTwo);
+  }
+  
+  //use mathmematical trickery to find the correct number
+  unsigned int findPowerOfTwo();
+  
+private:
+  bool isPowerOfTwo();
+  void toFractionalPart(mpfr_t & number);
+  unsigned int prefix;
+  mpfr_t lowerBound;
+  mpfr_t upperBound;
+  mpfr_t logTenTwo;
+};
+
+/*
+ *
+ */
+bool PowerFinder::isPowerOfTwo()
+{
+  //get the prefix
+  int n = prefix;
+  
+  //while prefix is even and greater than one
+  while (((n & 1) == 0) && n > 1) 
+    n >>= 1;
+  if (n == 1)
+    return true;
+  return false;
+}
+
+/*
+ *
+ */
+unsigned int PowerFinder::findPowerOfTwo()
+{
+  //if the prefix is a power of two, the answer is trivial
+  if (isPowerOfTwo())
+    return log2(prefix);
+  
+  //the number to return (used as a counter as well).
+  unsigned int correctPower = prefix / 2;
+  //cout << "starting at " << correctPower << endl;
+  
+  //the number to compare agains
+  mpfr_t fractionalPart;
+  mpfr_init(fractionalPart);
+  
+  //while the correct power of two has not been found
+  while (true)
+    {
+      //get the next factor of log_10(2) (could just add)
+      mpfr_mul_si(fractionalPart, logTenTwo, correctPower, MPFR_RNDN);
+      
+      //get its fractional part
+      toFractionalPart(fractionalPart);
+      
+      //cout <<  mpfr_get_ld(lowerBound, MPFR_RNDN) << " " << mpfr_get_ld(fractionalPart, MPFR_RNDN) << " " << mpfr_get_ld(upperBound, MPFR_RNDN) << endl;
+      
+      //if (frac > lowerBound && frac < upperBound)
+      if (mpfr_cmp(fractionalPart, lowerBound) > 0 && mpfr_cmp(upperBound, fractionalPart) > 0)
+	break;
+      
+      correctPower++;
+    }
+  
+  mpfr_clear(fractionalPart);
+  return correctPower;
+}
+
+/*
+ *
+ */
+void PowerFinder::toFractionalPart(mpfr_t & number)
+{
+  //get the integer part
+  int intPart = mpfr_get_d(number, MPFR_RNDN);
+  
+  //subtract the integer part
+  mpfr_sub_si(number, number, intPart, MPFR_RNDN);
+}
+
+/*
+ *
+ */
+int main(int argc, char* argv[])
+{
+  if (argc > 1)
+    {
+      PowerFinder powerFinder(atoi(argv[1]));
+      
+      clock_t start = clock();
+      int answer = powerFinder.findPowerOfTwo();
+      clock_t finish = clock();
+      
+      cout << "2 ^ " << answer << " = " << pow(2,answer) << endl;
+      cout << (finish - start) / (double) CLOCKS_PER_SEC << " seconds to calculate.\n\n";
+    }
+}
